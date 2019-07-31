@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -17,15 +16,21 @@ namespace RepoManager.Server
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation("Processing Token request");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-            var name = data?.name;
+            string code = data?.code;
+            string state = data?.state;
 
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            if(!string.IsNullOrEmpty(code)
+                && !string.IsNullOrEmpty(state))
+            {
+                var token = await new GitHubTokenService().Get(code, state);
+                return (ActionResult)new OkObjectResult((new { token = token }));
+            }
+            
+            return new BadRequestObjectResult("code and state are required to get token");
         }
     }
 }
