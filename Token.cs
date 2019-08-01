@@ -26,7 +26,7 @@ namespace RepoManager.Server
             if(!string.IsNullOrEmpty(code)
                 && !string.IsNullOrEmpty(state))
             {
-                var token = await new GitHubTokenService().Get(code, state);
+                var token = await new GitHubTokenService().Get(code, state, log);
                 return (ActionResult)new OkObjectResult((new { token = token }));
             }
             

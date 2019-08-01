@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace RepoManager.Server
 {
     internal class GitHubTokenService
     {
-        public async Task<string> Get(string code, string state)
+        public async Task<string> Get(string code, string state, ILogger log)
         {
             try
             {
@@ -15,16 +16,19 @@ namespace RepoManager.Server
                 string clientSecret = GetEnvironmentVariable("ClientSecret");
                 var response = await new HttpClient().PostAsync("https://github.com/login/oauth/access_token",
                 new FormUrlEncodedContent(new KeyValuePair<string, string>[] {
-                    new KeyValuePair<string, string> ("code", code ),
-                    new KeyValuePair<string, string> ("state", state ),
                     new KeyValuePair<string, string> ("client_id", clientId ),
-                    new KeyValuePair<string, string> ("client_secret", clientSecret )
+                    new KeyValuePair<string, string> ("client_secret", clientSecret ),
+                    new KeyValuePair<string, string> ("code", code ),
+                    new KeyValuePair<string, string> ("state", state )
                 }));
 
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadAsStringAsync();
             }
-            catch {}
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to get token from GitHub");
+            }
             
             return "failed";
         }
